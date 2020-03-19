@@ -24,6 +24,5 @@ jobs:
          run: |
           go test ./... -count=1 -race -cover
        - name: Build
-         if: matrix.go_version == 1.13
          run: |
            go build -v .
