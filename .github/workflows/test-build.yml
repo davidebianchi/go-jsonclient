@@ -6,7 +6,7 @@ jobs:
      runs-on: [ubuntu-latest]
      strategy:
        matrix:
-         go_version: [1.13]
+         go_version: [1.13, 1.14]
      steps:
        - uses: actions/checkout@v1
        - name: Use golang ${{ matrix.go_version }}
