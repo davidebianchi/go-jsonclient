@@ -31,7 +31,6 @@ type Options struct {
 // New function create a client using passed options
 // BaseURL must have a trailing slash
 func New(opts Options) (*Client, error) {
-	fmt.Printf("ASDASDASD %+v", opts)
 	baseURL, err := url.Parse(opts.BaseURL)
 	if err != nil {
 		return nil, err
