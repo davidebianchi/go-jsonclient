@@ -31,8 +31,12 @@ type Options struct {
 // New function create a client using passed options
 // BaseURL must have a trailing slash
 func New(opts Options) *Client {
+	var basePath = opts.BasePath
+	if basePath == "" {
+		basePath = "/"
+	}
 	client := &Client{
-		BaseURL:        &url.URL{Path: opts.BasePath},
+		BaseURL:        &url.URL{Path: basePath},
 		DefaultHeaders: Headers{},
 
 		client: http.DefaultClient,

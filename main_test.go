@@ -98,6 +98,32 @@ func TestNewRequestWithContext(t *testing.T) {
 		require.Exactly(t, contextValue, v, "context is not correct")
 	})
 
+	t.Run("correctly set request body without base path", func(t *testing.T) {
+		var data = map[string]interface{}{
+			"some": "json format",
+			"foo":  "bar",
+			"that": float64(3),
+		}
+		opts := Options{
+			Headers: Headers{
+				"some":  "header",
+				"other": "value",
+			},
+		}
+		client := New(opts)
+
+		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "my-resource", data)
+		require.NoError(t, err, "request error")
+
+		var reqBody map[string]interface{}
+		err = json.NewDecoder(req.Body).Decode(&reqBody)
+		require.NoError(t, err, "json marshal error")
+		require.Exactly(t, data, reqBody, "wrong request body")
+		require.Exactly(t, req.Header.Get("Content-Type"), "application/json")
+		v := req.Context().Value(testKeyCtx{})
+		require.Exactly(t, contextValue, v, "context is not correct")
+	})
+
 	t.Run("correctly add default headers to the request", func(t *testing.T) {
 		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "my-resource", nil)
 		require.NoError(t, err, "request error")
