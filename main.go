@@ -31,12 +31,8 @@ type Options struct {
 // New function create a client using passed options
 // BaseURL must have a trailing slash
 func New(opts Options) *Client {
-	var basePath = opts.BasePath
-	if basePath == "" {
-		basePath = "/"
-	}
 	client := &Client{
-		BaseURL:        &url.URL{Path: basePath},
+		BaseURL:        &url.URL{Path: opts.BasePath},
 		DefaultHeaders: Headers{},
 
 		client: http.DefaultClient,
@@ -62,7 +58,7 @@ func New(opts Options) *Client {
 // To the request are added all the DefaultHeaders (if body is passed,
 // `application/json` content-type takes precedence over DefaultHeaders).
 func (c *Client) NewRequestWithContext(ctx context.Context, method string, urlStr string, body interface{}) (*http.Request, error) {
-	if !strings.HasSuffix(c.BaseURL.Path, "/") {
+	if c.BaseURL.Path != "" && !strings.HasSuffix(c.BaseURL.Path, "/") {
 		return nil, fmt.Errorf("BaseURL must have a trailing slash, but %q does not", c.BaseURL)
 	}
 	u, err := c.BaseURL.Parse(urlStr)

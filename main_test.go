@@ -112,7 +112,7 @@ func TestNewRequestWithContext(t *testing.T) {
 		}
 		client := New(opts)
 
-		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "my-resource", data)
+		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "https://local-server/my-resource", data)
 		require.NoError(t, err, "request error")
 
 		var reqBody map[string]interface{}
