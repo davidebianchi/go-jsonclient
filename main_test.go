@@ -14,31 +14,63 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const apiURL = "/api/url/"
+const apiURL = "https://base-url:8080/api/url/"
+
+var baseURL = &url.URL{
+	Path:   "/api/url/",
+	Host:   "base-url:8080",
+	Scheme: "https",
+}
 
 func TestGetClient(t *testing.T) {
 	t.Run("correctly returns client", func(t *testing.T) {
-		opts := Options{BasePath: apiURL}
-		client := New(opts)
+		opts := Options{BaseURL: apiURL}
+		client, err := New(opts)
 
+		require.NoError(t, err, "create client error")
 		require.Exactly(t, client, &Client{
-			BaseURL:        &url.URL{Path: apiURL},
+			BaseURL:        baseURL,
 			DefaultHeaders: Headers{},
 
 			client: http.DefaultClient,
 		})
 	})
+
+	t.Run("correctly returns client with empty options", func(t *testing.T) {
+		opts := Options{}
+		client, err := New(opts)
+
+		require.NoError(t, err, "create client error")
+
+		require.Exactly(t, client, &Client{
+			BaseURL:        &url.URL{},
+			DefaultHeaders: Headers{},
+
+			client: http.DefaultClient,
+		})
+	})
+
+	t.Run("throws if base url is not correct", func(t *testing.T) {
+		opts := Options{
+			BaseURL: "/not	correct",
+		}
+		client, err := New(opts)
+
+		require.Error(t, err, "create client error")
+		require.Nil(t, client, "client is not nil")
+	})
 }
 
 func TestNewRequestWithContext(t *testing.T) {
 	opts := Options{
-		BasePath: apiURL,
+		BaseURL: apiURL,
 		Headers: Headers{
 			"some":  "header",
 			"other": "value",
 		},
 	}
-	client := New(opts)
+	client, err := New(opts)
+	require.NoError(t, err, "create client error")
 
 	type testKeyCtx struct{}
 	contextValue := "context-value"
@@ -46,8 +78,9 @@ func TestNewRequestWithContext(t *testing.T) {
 
 	t.Run("throws if base url has not trailing slash", func(t *testing.T) {
 		baseURL := strings.TrimSuffix(apiURL, "/")
-		opts := Options{BasePath: baseURL}
-		client := New(opts)
+		opts := Options{BaseURL: baseURL}
+		client, err := New(opts)
+		require.NoError(t, err, "create client error")
 
 		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "my-resource", nil)
 
@@ -66,7 +99,7 @@ func TestNewRequestWithContext(t *testing.T) {
 		req, err := client.NewRequestWithContext(ctx, http.MethodGet, "my-resource", nil)
 
 		require.NoError(t, err, "new request not errors")
-		require.Exactly(t, "/api/url/my-resource", req.URL.String())
+		require.Exactly(t, "https://base-url:8080/api/url/my-resource", req.URL.String())
 		require.Exactly(t, req.Header.Get("Content-Type"), "")
 		v := req.Context().Value(testKeyCtx{})
 		require.Exactly(t, contextValue, v, "context is not correct")
@@ -76,7 +109,7 @@ func TestNewRequestWithContext(t *testing.T) {
 		req, err := client.NewRequestWithContext(ctx, http.MethodGet, "my-resource?query=params", nil)
 
 		require.NoError(t, err, "new request not errors")
-		require.Exactly(t, "/api/url/my-resource?query=params", req.URL.String())
+		require.Exactly(t, "https://base-url:8080/api/url/my-resource?query=params", req.URL.String())
 	})
 
 	t.Run("correctly set request body", func(t *testing.T) {
@@ -110,7 +143,8 @@ func TestNewRequestWithContext(t *testing.T) {
 				"other": "value",
 			},
 		}
-		client := New(opts)
+		client, err := New(opts)
+		require.NoError(t, err, "create client error")
 
 		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "https://local-server/my-resource", data)
 		require.NoError(t, err, "request error")
@@ -139,12 +173,13 @@ func TestNewRequestWithContext(t *testing.T) {
 			"that": float64(3),
 		}
 		opts := Options{
-			BasePath: apiURL,
+			BaseURL: apiURL,
 			Headers: Headers{
 				"Content-Type": "not-a-json",
 			},
 		}
-		client := New(opts)
+		client, err := New(opts)
+		require.NoError(t, err, "create client error")
 
 		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "my-resource", data)
 		require.NoError(t, err, "request error")
@@ -154,14 +189,15 @@ func TestNewRequestWithContext(t *testing.T) {
 }
 
 func TestNewRequest(t *testing.T) {
-	opts := Options{BasePath: apiURL}
-	client := New(opts)
+	opts := Options{BaseURL: apiURL}
+	client, err := New(opts)
+	require.NoError(t, err, "create client error")
 
 	t.Run("correctly create request path", func(t *testing.T) {
 		req, err := client.NewRequest(http.MethodGet, "my-resource", nil)
 
 		require.NoError(t, err, "new request not errors")
-		require.Exactly(t, "/api/url/my-resource", req.URL.String())
+		require.Exactly(t, "https://base-url:8080/api/url/my-resource", req.URL.String())
 		require.Exactly(t, req.Header.Get("Content-Type"), "")
 	})
 
@@ -184,8 +220,9 @@ func TestNewRequest(t *testing.T) {
 }
 
 func TestDo(t *testing.T) {
-	opts := Options{BasePath: apiURL}
-	client := New(opts)
+	opts := Options{BaseURL: apiURL}
+	client, err := New(opts)
+	require.NoError(t, err, "create client error")
 
 	type Response struct {
 		Message string `json:"message"`

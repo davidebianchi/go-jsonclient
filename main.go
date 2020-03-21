@@ -24,15 +24,21 @@ type Client struct {
 
 // Options to pass to create a new client
 type Options struct {
-	BasePath string
-	Headers  Headers
+	BaseURL string
+	Headers Headers
 }
 
 // New function create a client using passed options
 // BaseURL must have a trailing slash
-func New(opts Options) *Client {
+func New(opts Options) (*Client, error) {
+	fmt.Printf("ASDASDASD %+v", opts)
+	baseURL, err := url.Parse(opts.BaseURL)
+	if err != nil {
+		return nil, err
+	}
+
 	client := &Client{
-		BaseURL:        &url.URL{Path: opts.BasePath},
+		BaseURL:        baseURL,
 		DefaultHeaders: Headers{},
 
 		client: http.DefaultClient,
@@ -42,7 +48,7 @@ func New(opts Options) *Client {
 		client.DefaultHeaders = opts.Headers
 	}
 
-	return client
+	return client, nil
 }
 
 // NewRequestWithContext function works like the function of `net/http` package,
