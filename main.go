@@ -118,6 +118,11 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	}
 	defer resp.Body.Close()
 
+	respErr := checkResponse(resp)
+	if respErr != nil {
+		return resp, respErr
+	}
+
 	if v != nil {
 		if w, ok := v.(io.Writer); ok {
 			io.Copy(w, resp.Body)

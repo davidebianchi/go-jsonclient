@@ -230,11 +230,11 @@ func TestDo(t *testing.T) {
 	}
 	response := `{"message": "my response"}`
 
-	setupServer := func(body string, statusCode int) *httptest.Server {
+	setupServer := func(responseBody string, statusCode int) *httptest.Server {
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			w.WriteHeader(statusCode)
-			if body != "" {
-				w.Write([]byte(body))
+			if responseBody != "" {
+				w.Write([]byte(responseBody))
 				return
 			}
 			w.Write(nil)
@@ -332,7 +332,9 @@ func TestDo(t *testing.T) {
 	})
 
 	t.Run("correctly return response if http error", func(t *testing.T) {
-		s := setupServer("", 404)
+		statusCode := 404
+		responseBody := `{"message":"Not Found","error":"Not Found","statusCode":404}`
+		s := setupServer(responseBody, statusCode)
 		defer s.Close()
 
 		requestURL := fmt.Sprintf("%s/", s.URL)
@@ -342,7 +344,27 @@ func TestDo(t *testing.T) {
 		v := Response{}
 		resp, err := client.Do(req, &v)
 		require.Exactly(t, Response{}, v, "v not empty")
-		require.NoError(t, err, "response error")
+		require.Error(t, err, "response error")
+
+		expectedError := fmt.Sprintf("GET %s/: 404 - %s", s.URL, responseBody)
+		require.EqualError(t, err, expectedError, "error not correct")
+		require.Equal(t, 404, resp.StatusCode, "error returning status code")
+	})
+
+	t.Run("correctly return response if http error expecting array", func(t *testing.T) {
+		s := setupServer(`{"message": "Bad Request"}`, 404)
+		defer s.Close()
+
+		requestURL := fmt.Sprintf("%s/", s.URL)
+		req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+		require.NoError(t, err, "wrong request creation")
+
+		v := []Response{}
+		resp, err := client.Do(req, &v)
+		require.Exactly(t, []Response{}, v, "v not empty")
+
+		expectedError := fmt.Sprintf(`GET %s/: 404 - {"message": "Bad Request"}`, s.URL)
+		require.EqualError(t, err, expectedError, "response error")
 		require.Equal(t, 404, resp.StatusCode, "error returning status code")
 	})
 
