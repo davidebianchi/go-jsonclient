@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -355,5 +356,87 @@ func TestDo(t *testing.T) {
 		resp, err := client.Do(req, nil)
 		require.Error(t, err, "response error")
 		require.Nil(t, resp, "response is not nil")
+	})
+}
+
+func TestIntegration(t *testing.T) {
+	setupServer := func(responseBody, expectedRequestBody string, statusCode int) *httptest.Server {
+		t.Helper()
+		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			defer req.Body.Close()
+
+			if expectedRequestBody != "" {
+				bodyBytes, _ := ioutil.ReadAll(req.Body)
+				require.Equal(t, expectedRequestBody, strings.TrimSuffix(string(bodyBytes), "\n"))
+			}
+
+			w.WriteHeader(statusCode)
+			if responseBody != "" {
+				w.Write([]byte(responseBody))
+				return
+			}
+			w.Write(nil)
+		}))
+	}
+
+	t.Run("get", func(t *testing.T) {
+		expectedMessage := "my message"
+		type Response struct {
+			Message string `json:"message"`
+		}
+		s := setupServer(fmt.Sprintf(`{"message": "%s"}`, expectedMessage), "", 200)
+		opts := Options{
+			BaseURL: fmt.Sprintf("%s/api/", s.URL),
+		}
+		client, err := New(opts)
+		require.NoError(t, err, "throws create client")
+
+		req, err := client.NewRequest(http.MethodGet, "/my-resource", nil)
+		require.NoError(t, err, "throws creating request")
+
+		response := Response{}
+		r, err := client.Do(req, &response)
+		require.NoError(t, err, "throws exec request")
+
+		require.Equal(t, Response{
+			Message: expectedMessage,
+		}, response)
+		require.Equal(t, 200, r.StatusCode, "wrong status code")
+	})
+
+	t.Run("post", func(t *testing.T) {
+		myID := "my id"
+		type Response struct {
+			ID string `json:"id"`
+		}
+		type RequestBody struct {
+			Name        string `json:"name"`
+			Description string `json:"description"`
+		}
+
+		expectedName := "my name"
+		expectedDescription := "my description"
+		expectedRequestBody := fmt.Sprintf(`{"name":"%s","description":"%s"}`, expectedName, expectedDescription)
+		s := setupServer(fmt.Sprintf(`{"id": "%s"}`, myID), expectedRequestBody, 200)
+		opts := Options{
+			BaseURL: fmt.Sprintf("%s/api/", s.URL),
+		}
+		client, err := New(opts)
+		require.NoError(t, err, "throws create client")
+
+		requestBody := RequestBody{
+			Name:        expectedName,
+			Description: expectedDescription,
+		}
+		req, err := client.NewRequest(http.MethodPost, "/my-resource", requestBody)
+		require.NoError(t, err, "throws creating request")
+		response := Response{}
+		r, err := client.Do(req, &response)
+		require.NoError(t, err, "throws exec request")
+
+		require.Equal(t, Response{
+			ID: myID,
+		}, response)
+		require.Equal(t, 200, r.StatusCode, "wrong status code")
 	})
 }
