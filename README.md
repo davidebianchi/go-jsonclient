@@ -72,7 +72,7 @@ see the [tags on this repository](https://github.com/mia-platform/terraform-goog
 
 [github-actions]: https://github.com/davidebianchi/go-jsonclient/actions
 [github-actions-svg]: https://github.com/davidebianchi/go-jsonclient/workflows/Test%20and%20build/badge.svg
-[godoc-svg]: https://pkg.go.dev/github.com/davidebianchi/go-jsonclient?status.svg
+[godoc-svg]: https://godoc.org/github.com/davidebianchi/go-jsonclient?status.svg
 [godoc-link]: https://pkg.go.dev/github.com/davidebianchi/go-jsonclient
 [go-report-card]: https://goreportcard.com/badge/github.com/davidebianchi/go-jsonclient
 [go-report-card-link]: https://goreportcard.com/report/github.com/davidebianchi/go-jsonclient
