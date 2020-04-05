@@ -20,10 +20,15 @@ type HTTPError struct {
 var ErrHTTP = errors.New("http error")
 
 func (e *HTTPError) Error() string {
-	return fmt.Sprintf("%v %v: %d - %+v",
+	var delimiter string
+	if e.raw != "" {
+		delimiter = " - "
+	}
+	return fmt.Sprintf("%v %v: %d%s%+v",
 		e.Response.Request.Method,
 		e.Response.Request.URL,
 		e.Response.StatusCode,
+		delimiter,
 		e.raw,
 	)
 }

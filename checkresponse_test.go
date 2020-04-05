@@ -34,7 +34,7 @@ func TestCheckResponse(t *testing.T) {
 
 			raw: `{"message":"error"}`,
 		}, e)
-		require.Equal(t, ErrHTTP, e.Unwrap())
+		require.True(t, errors.Is(err, ErrHTTP))
 	})
 
 	t.Run("return error with a status code less than 200", func(t *testing.T) {
@@ -50,6 +50,29 @@ func TestCheckResponse(t *testing.T) {
 		}
 		err := checkResponse(resp)
 		require.EqualError(t, err, `METHOD /request-url: 199 - {"message":"error"}`, "error checking response")
+	})
+
+	t.Run("return error with a status code more than 299 with empty body", func(t *testing.T) {
+		body := ioutil.NopCloser(strings.NewReader(``))
+
+		resp := &http.Response{
+			StatusCode: 300,
+			Body:       body,
+			Request: &http.Request{
+				Method: "METHOD",
+				URL:    &url.URL{Path: "/request-url"},
+			},
+		}
+		err := checkResponse(resp)
+		require.EqualError(t, err, `METHOD /request-url: 300`, "error checking response")
+		var e *HTTPError
+		require.True(t, errors.As(err, &e))
+		require.Equal(t, &HTTPError{
+			StatusCode: 300,
+			Response:   resp,
+			Err:        errors.New("http error"),
+		}, e)
+		require.True(t, errors.Is(err, ErrHTTP))
 	})
 
 	t.Run("return nil with status code 200", func(t *testing.T) {
