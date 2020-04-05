@@ -16,13 +16,19 @@ type HTTPError struct {
 	raw string
 }
 
-func (r *HTTPError) Error() string {
+// ErrHTTP define an http error
+var ErrHTTP = errors.New("http error")
+
+func (e *HTTPError) Error() string {
 	return fmt.Sprintf("%v %v: %d - %+v",
-		r.Response.Request.Method,
-		r.Response.Request.URL,
-		r.Response.StatusCode,
-		r.raw,
+		e.Response.Request.Method,
+		e.Response.Request.URL,
+		e.Response.StatusCode,
+		e.raw,
 	)
+}
+func (e *HTTPError) Unwrap() error {
+	return e.Err
 }
 
 func checkResponse(r *http.Response) error {
@@ -33,7 +39,7 @@ func checkResponse(r *http.Response) error {
 	errorData := &HTTPError{
 		Response:   r,
 		StatusCode: r.StatusCode,
-		Err:        errors.New("http error"),
+		Err:        ErrHTTP,
 	}
 	data, err := ioutil.ReadAll(r.Body)
 	if err == nil && data != nil {

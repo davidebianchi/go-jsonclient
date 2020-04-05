@@ -34,6 +34,7 @@ func TestCheckResponse(t *testing.T) {
 
 			raw: `{"message":"error"}`,
 		}, e)
+		require.Equal(t, ErrHTTP, e.Unwrap())
 	})
 
 	t.Run("return error with a status code less than 200", func(t *testing.T) {
