@@ -1,19 +1,22 @@
 package jsonclient
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 )
 
-// HTTPErrorResponse struct to define http response with status code not 2xx
-type HTTPErrorResponse struct {
-	Response *http.Response
+// HTTPError struct define http response with status code not 2xx
+type HTTPError struct {
+	Response   *http.Response
+	StatusCode int
+	Err        error
 
 	raw string
 }
 
-func (r *HTTPErrorResponse) Error() string {
+func (r *HTTPError) Error() string {
 	return fmt.Sprintf("%v %v: %d - %+v",
 		r.Response.Request.Method,
 		r.Response.Request.URL,
@@ -27,7 +30,11 @@ func checkResponse(r *http.Response) error {
 		return nil
 	}
 
-	errorData := &HTTPErrorResponse{Response: r}
+	errorData := &HTTPError{
+		Response:   r,
+		StatusCode: r.StatusCode,
+		Err:        errors.New("http error"),
+	}
 	data, err := ioutil.ReadAll(r.Body)
 	if err == nil && data != nil {
 		errorData.raw = string(data)

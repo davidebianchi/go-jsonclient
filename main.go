@@ -120,7 +120,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 
 	respErr := checkResponse(resp)
 	if respErr != nil {
-		return resp, respErr
+		return nil, respErr
 	}
 
 	if v != nil {

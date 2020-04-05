@@ -1,6 +1,7 @@
 package jsonclient
 
 import (
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -24,6 +25,15 @@ func TestCheckResponse(t *testing.T) {
 		}
 		err := checkResponse(resp)
 		require.EqualError(t, err, `METHOD /request-url: 300 - {"message":"error"}`, "error checking response")
+		var e *HTTPError
+		require.True(t, errors.As(err, &e))
+		require.Equal(t, &HTTPError{
+			StatusCode: 300,
+			Response:   resp,
+			Err:        errors.New("http error"),
+
+			raw: `{"message":"error"}`,
+		}, e)
 	})
 
 	t.Run("return error with a status code less than 200", func(t *testing.T) {

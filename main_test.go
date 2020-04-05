@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -343,12 +344,15 @@ func TestDo(t *testing.T) {
 
 		v := Response{}
 		resp, err := client.Do(req, &v)
+		require.Nil(t, resp)
 		require.Exactly(t, Response{}, v, "v not empty")
 		require.Error(t, err, "response error")
 
 		expectedError := fmt.Sprintf("GET %s/: 404 - %s", s.URL, responseBody)
 		require.EqualError(t, err, expectedError, "error not correct")
-		require.Equal(t, 404, resp.StatusCode, "error returning status code")
+		var e *HTTPError
+		require.True(t, errors.As(err, &e))
+		require.Equal(t, 404, e.StatusCode, "error returning status code")
 	})
 
 	t.Run("correctly return response if http error expecting array", func(t *testing.T) {
@@ -361,11 +365,14 @@ func TestDo(t *testing.T) {
 
 		v := []Response{}
 		resp, err := client.Do(req, &v)
+		require.Nil(t, resp)
 		require.Exactly(t, []Response{}, v, "v not empty")
 
 		expectedError := fmt.Sprintf(`GET %s/: 404 - {"message": "Bad Request"}`, s.URL)
 		require.EqualError(t, err, expectedError, "response error")
-		require.Equal(t, 404, resp.StatusCode, "error returning status code")
+		var e *HTTPError
+		require.True(t, errors.As(err, &e))
+		require.Equal(t, 404, e.StatusCode, "error returning status code")
 	})
 
 	t.Run("throws with closed server", func(t *testing.T) {
