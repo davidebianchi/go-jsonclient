@@ -68,7 +68,7 @@ func handleRequest () {
 ## Versioning
 
 We use [SemVer][semver] for versioning. For the versions available,
-see the [tags on this repository](https://github.com/mia-platform/terraform-google-project/tags).
+see the [tags on this repository](https://github.com/davidebianchi/go-jsonclient/tags).
 
 [github-actions]: https://github.com/davidebianchi/go-jsonclient/actions
 [github-actions-svg]: https://github.com/davidebianchi/go-jsonclient/workflows/Test%20and%20build/badge.svg
