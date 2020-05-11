@@ -31,7 +31,7 @@ authentication headers:
 ```go
 func handleRequest () {
   opts := jsonclient.Options{
-    BasePath: apiURL,
+    BaseURL: apiURL,
     Headers: jsonclient.Headers{
       "some":  "header",
       "other": "value",
