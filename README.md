@@ -31,13 +31,16 @@ authentication headers:
 ```go
 func handleRequest () {
   opts := jsonclient.Options{
-    BasePath: apiURL,
-    Headers: Headers{
+    BaseURL: apiURL,
+    Headers: jsonclient.Headers{
       "some":  "header",
       "other": "value",
     },
   }
-  client := jsonclient.New(opts)
+  client, err := jsonclient.New(opts)
+  if err != nil {
+    panic("Error creating client")
+  }
 
   var data = map[string]interface{}{
     "some": "json format",
