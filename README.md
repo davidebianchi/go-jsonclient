@@ -30,7 +30,7 @@ authentication headers:
 
 ```go
 func handleRequest () {
-  opts := Options{
+  opts := jsonclient.Options{
     BasePath: apiURL,
     Headers: Headers{
       "some":  "header",
@@ -44,7 +44,7 @@ func handleRequest () {
     "foo":  "bar",
     "that": float64(3),
   }
-  req, err := client.NewRequest(http.MethodPost, "my-resource", data)
+  req, err := client.NewRequest(http.MethodPost, "my/path", data)
   if err != nil {
     panic("Error creating request")
   }
