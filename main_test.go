@@ -38,18 +38,12 @@ func TestGetClient(t *testing.T) {
 		})
 	})
 
-	t.Run("correctly returns client with empty options", func(t *testing.T) {
+	t.Run("throwns with empty options", func(t *testing.T) {
 		opts := Options{}
 		client, err := New(opts)
 
-		require.NoError(t, err, "create client error")
-
-		require.Exactly(t, client, &Client{
-			BaseURL:        &url.URL{},
-			DefaultHeaders: Headers{},
-
-			client: http.DefaultClient,
-		})
+		require.EqualError(t, err, "baseURL should be an absolute url")
+		require.Nil(t, client)
 	})
 
 	t.Run("throws if base url is not correct", func(t *testing.T) {
@@ -59,6 +53,36 @@ func TestGetClient(t *testing.T) {
 		client, err := New(opts)
 
 		require.Error(t, err, "create client error")
+		require.Nil(t, client, "client is not nil")
+	})
+
+	t.Run("throws if base url is not absolute", func(t *testing.T) {
+		opts := Options{
+			BaseURL: "/notcorrect",
+		}
+		client, err := New(opts)
+
+		require.EqualError(t, err, "baseURL should be an absolute url", "create client error")
+		require.Nil(t, client, "client is not nil")
+	})
+
+	t.Run("throws if base url has unsupported scheme", func(t *testing.T) {
+		opts := Options{
+			BaseURL: "ws://notcorrect",
+		}
+		client, err := New(opts)
+
+		require.EqualError(t, err, "unsupported scheme: ws", "create client error")
+		require.Nil(t, client, "client is not nil")
+	})
+
+	t.Run("throws if base url doesn't end with /", func(t *testing.T) {
+		opts := Options{
+			BaseURL: strings.TrimSuffix(apiURL, "/"),
+		}
+		client, err := New(opts)
+
+		require.EqualError(t, err, "BaseURL must end with a trailing slash")
 		require.Nil(t, client, "client is not nil")
 	})
 }
@@ -77,18 +101,6 @@ func TestNewRequestWithContext(t *testing.T) {
 	type testKeyCtx struct{}
 	contextValue := "context-value"
 	ctx := context.WithValue(context.Background(), testKeyCtx{}, contextValue)
-
-	t.Run("throws if base url has not trailing slash", func(t *testing.T) {
-		baseURL := strings.TrimSuffix(apiURL, "/")
-		opts := Options{BaseURL: baseURL}
-		client, err := New(opts)
-		require.NoError(t, err, "create client error")
-
-		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "my-resource", nil)
-
-		require.EqualError(t, err, fmt.Sprintf(`BaseURL must have a trailing slash, but "%s" does not`, baseURL), "new request not errors")
-		require.Nil(t, req)
-	})
 
 	t.Run("throws if url parsing throw", func(t *testing.T) {
 		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "	", nil)
@@ -122,33 +134,6 @@ func TestNewRequestWithContext(t *testing.T) {
 		}
 
 		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "my-resource", data)
-		require.NoError(t, err, "request error")
-
-		var reqBody map[string]interface{}
-		err = json.NewDecoder(req.Body).Decode(&reqBody)
-		require.NoError(t, err, "json marshal error")
-		require.Exactly(t, data, reqBody, "wrong request body")
-		require.Exactly(t, req.Header.Get("Content-Type"), "application/json")
-		v := req.Context().Value(testKeyCtx{})
-		require.Exactly(t, contextValue, v, "context is not correct")
-	})
-
-	t.Run("correctly set request body without base path", func(t *testing.T) {
-		var data = map[string]interface{}{
-			"some": "json format",
-			"foo":  "bar",
-			"that": float64(3),
-		}
-		opts := Options{
-			Headers: Headers{
-				"some":  "header",
-				"other": "value",
-			},
-		}
-		client, err := New(opts)
-		require.NoError(t, err, "create client error")
-
-		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "https://local-server/my-resource", data)
 		require.NoError(t, err, "request error")
 
 		var reqBody map[string]interface{}
