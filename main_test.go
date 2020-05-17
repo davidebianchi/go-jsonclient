@@ -38,12 +38,16 @@ func TestGetClient(t *testing.T) {
 		})
 	})
 
-	t.Run("throwns with empty options", func(t *testing.T) {
+	t.Run("correctly returns client with empty options", func(t *testing.T) {
 		opts := Options{}
 		client, err := New(opts)
+		require.NoError(t, err, "create client error")
+		require.Exactly(t, client, &Client{
+			BaseURL:        &url.URL{},
+			DefaultHeaders: Headers{},
 
-		require.EqualError(t, err, "baseURL should be an absolute url")
-		require.Nil(t, client)
+			client: http.DefaultClient,
+		})
 	})
 
 	t.Run("throws if base url is not correct", func(t *testing.T) {
@@ -109,6 +113,13 @@ func TestNewRequestWithContext(t *testing.T) {
 		require.Nil(t, req, "req is not nil")
 	})
 
+	t.Run("throws if baseURL and urlStr are absolute", func(t *testing.T) {
+		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
+
+		require.Error(t, err, "error aaaal")
+		require.Nil(t, req, "req is not nil")
+	})
+
 	t.Run("correctly create request path", func(t *testing.T) {
 		req, err := client.NewRequestWithContext(ctx, http.MethodGet, "my-resource", nil)
 
@@ -134,6 +145,33 @@ func TestNewRequestWithContext(t *testing.T) {
 		}
 
 		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "my-resource", data)
+		require.NoError(t, err, "request error")
+
+		var reqBody map[string]interface{}
+		err = json.NewDecoder(req.Body).Decode(&reqBody)
+		require.NoError(t, err, "json marshal error")
+		require.Exactly(t, data, reqBody, "wrong request body")
+		require.Exactly(t, req.Header.Get("Content-Type"), "application/json")
+		v := req.Context().Value(testKeyCtx{})
+		require.Exactly(t, contextValue, v, "context is not correct")
+	})
+
+	t.Run("correctly set request body without base path", func(t *testing.T) {
+		var data = map[string]interface{}{
+			"some": "json format",
+			"foo":  "bar",
+			"that": float64(3),
+		}
+		opts := Options{
+			Headers: Headers{
+				"some":  "header",
+				"other": "value",
+			},
+		}
+		client, err := New(opts)
+		require.NoError(t, err, "create client error")
+
+		req, err := client.NewRequestWithContext(ctx, http.MethodPost, "https://local-server/my-resource", data)
 		require.NoError(t, err, "request error")
 
 		var reqBody map[string]interface{}
