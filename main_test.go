@@ -52,11 +52,11 @@ func TestGetClient(t *testing.T) {
 
 	t.Run("throws if base url is not correct", func(t *testing.T) {
 		opts := Options{
-			BaseURL: "/not	correct",
+			BaseURL: "/not\tcorrect",
 		}
 		client, err := New(opts)
 
-		require.Error(t, err, "create client error")
+		require.True(t, strings.Contains(err.Error(), "invalid control character in URL"))
 		require.Nil(t, client, "client is not nil")
 	})
 
@@ -107,16 +107,16 @@ func TestNewRequestWithContext(t *testing.T) {
 	ctx := context.WithValue(context.Background(), testKeyCtx{}, contextValue)
 
 	t.Run("throws if url parsing throw", func(t *testing.T) {
-		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "	", nil)
+		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "\t", nil)
 
-		require.Error(t, err, "error creating url")
+		require.True(t, strings.Contains(err.Error(), "invalid control character in URL"))
 		require.Nil(t, req, "req is not nil")
 	})
 
 	t.Run("throws if baseURL and urlStr are absolute", func(t *testing.T) {
 		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
-		require.Error(t, err, "error aaaal")
+		require.EqualError(t, err, "baseURL and urlStr cannot be both absolute")
 		require.Nil(t, req, "req is not nil")
 	})
 
