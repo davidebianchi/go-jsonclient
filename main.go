@@ -29,11 +29,26 @@ type Options struct {
 }
 
 // New function create a client using passed options
-// BaseURL must have a trailing slash
+// BaseURL must be an HTTP or HTTPs absolute url and have a trailing slash
 func New(opts Options) (*Client, error) {
 	baseURL, err := url.Parse(opts.BaseURL)
 	if err != nil {
 		return nil, err
+	}
+	if isBaseURLSet(opts.BaseURL) {
+		if !baseURL.IsAbs() {
+			return nil, fmt.Errorf("baseURL should be an absolute url")
+		}
+
+		scheme := baseURL.Scheme
+		if scheme != "http" && scheme != "https" {
+			return nil, fmt.Errorf("unsupported scheme: %s", scheme)
+		}
+
+		path := baseURL.Path
+		if !strings.HasSuffix(path, "/") {
+			return nil, fmt.Errorf("BaseURL must end with a trailing slash")
+		}
 	}
 
 	client := &Client{
@@ -63,9 +78,14 @@ func New(opts Options) (*Client, error) {
 // To the request are added all the DefaultHeaders (if body is passed,
 // `application/json` content-type takes precedence over DefaultHeaders).
 func (c *Client) NewRequestWithContext(ctx context.Context, method string, urlStr string, body interface{}) (*http.Request, error) {
-	if c.BaseURL.Path != "" && !strings.HasSuffix(c.BaseURL.Path, "/") {
-		return nil, fmt.Errorf("BaseURL must have a trailing slash, but %q does not", c.BaseURL)
+	parsedURLStr, err := url.Parse(urlStr)
+	if err != nil {
+		return nil, err
 	}
+	if c.BaseURL.IsAbs() && parsedURLStr.IsAbs() {
+		return nil, fmt.Errorf("baseURL and urlStr cannot be both absolute")
+	}
+
 	u, err := c.BaseURL.Parse(urlStr)
 	if err != nil {
 		return nil, err
@@ -135,4 +155,8 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	}
 
 	return resp, nil
+}
+
+func isBaseURLSet(baseURL string) bool {
+	return baseURL != ""
 }

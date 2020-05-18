@@ -41,9 +41,7 @@ func TestGetClient(t *testing.T) {
 	t.Run("correctly returns client with empty options", func(t *testing.T) {
 		opts := Options{}
 		client, err := New(opts)
-
 		require.NoError(t, err, "create client error")
-
 		require.Exactly(t, client, &Client{
 			BaseURL:        &url.URL{},
 			DefaultHeaders: Headers{},
@@ -54,11 +52,41 @@ func TestGetClient(t *testing.T) {
 
 	t.Run("throws if base url is not correct", func(t *testing.T) {
 		opts := Options{
-			BaseURL: "/not	correct",
+			BaseURL: "/not\tcorrect",
 		}
 		client, err := New(opts)
 
-		require.Error(t, err, "create client error")
+		require.True(t, strings.Contains(err.Error(), "invalid control character in URL"))
+		require.Nil(t, client, "client is not nil")
+	})
+
+	t.Run("throws if base url is not absolute", func(t *testing.T) {
+		opts := Options{
+			BaseURL: "/notcorrect",
+		}
+		client, err := New(opts)
+
+		require.EqualError(t, err, "baseURL should be an absolute url", "create client error")
+		require.Nil(t, client, "client is not nil")
+	})
+
+	t.Run("throws if base url has unsupported scheme", func(t *testing.T) {
+		opts := Options{
+			BaseURL: "ws://notcorrect",
+		}
+		client, err := New(opts)
+
+		require.EqualError(t, err, "unsupported scheme: ws", "create client error")
+		require.Nil(t, client, "client is not nil")
+	})
+
+	t.Run("throws if base url doesn't end with /", func(t *testing.T) {
+		opts := Options{
+			BaseURL: strings.TrimSuffix(apiURL, "/"),
+		}
+		client, err := New(opts)
+
+		require.EqualError(t, err, "BaseURL must end with a trailing slash")
 		require.Nil(t, client, "client is not nil")
 	})
 }
@@ -78,22 +106,17 @@ func TestNewRequestWithContext(t *testing.T) {
 	contextValue := "context-value"
 	ctx := context.WithValue(context.Background(), testKeyCtx{}, contextValue)
 
-	t.Run("throws if base url has not trailing slash", func(t *testing.T) {
-		baseURL := strings.TrimSuffix(apiURL, "/")
-		opts := Options{BaseURL: baseURL}
-		client, err := New(opts)
-		require.NoError(t, err, "create client error")
+	t.Run("throws if url parsing throw", func(t *testing.T) {
+		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "\t", nil)
 
-		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "my-resource", nil)
-
-		require.EqualError(t, err, fmt.Sprintf(`BaseURL must have a trailing slash, but "%s" does not`, baseURL), "new request not errors")
-		require.Nil(t, req)
+		require.True(t, strings.Contains(err.Error(), "invalid control character in URL"))
+		require.Nil(t, req, "req is not nil")
 	})
 
-	t.Run("throws if url parsing throw", func(t *testing.T) {
-		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "	", nil)
+	t.Run("throws if baseURL and urlStr are absolute", func(t *testing.T) {
+		req, err := client.NewRequestWithContext(context.Background(), http.MethodGet, "http://example.org", nil)
 
-		require.Error(t, err, "error creating url")
+		require.EqualError(t, err, "baseURL and urlStr cannot be both absolute")
 		require.Nil(t, req, "req is not nil")
 	})
 
