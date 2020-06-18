@@ -409,6 +409,69 @@ func TestDo(t *testing.T) {
 		require.Error(t, err, "response error")
 		require.Nil(t, resp, "response is not nil")
 	})
+
+	t.Run("can read raw body from returned response if providing nil", func(t *testing.T) {
+		s := setupServer(response, 200)
+		defer s.Close()
+
+		requestURL := fmt.Sprintf("%s/", s.URL)
+		req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+		require.NoError(t, err, "wrong request creation")
+
+
+		resp, err := client.Do(req, nil)
+		require.NoError(t, err, "wrong request do")
+		require.Exactly(t, 200, resp.StatusCode)
+
+		readBytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		require.NoError(t, err, "unexpected error reading response body")
+		require.Exactly(t, response, string(readBytes), "buffer copy fails")
+	})
+
+	t.Run("can read raw body from returned response if providing a buffer", func(t *testing.T) {
+		s := setupServer(response, 200)
+		defer s.Close()
+
+		requestURL := fmt.Sprintf("%s/", s.URL)
+		req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+		require.NoError(t, err, "wrong request creation")
+
+		var buffer = &bytes.Buffer{}
+
+		resp, err := client.Do(req, buffer)
+		require.NoError(t, err, "wrong request do")
+		require.Exactly(t, 200, resp.StatusCode)
+		require.Exactly(t, response, buffer.String(), "buffer copy fails")
+
+		readBytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		require.NoError(t, err, "unexpected error reading response body")
+		require.Exactly(t, response, string(readBytes), "buffer copy fails")
+	})
+
+	t.Run("can read raw body from returned response if providing a struct", func(t *testing.T) {
+		s := setupServer(response, 200)
+		defer s.Close()
+
+		requestURL := fmt.Sprintf("%s/", s.URL)
+		req, err := http.NewRequest(http.MethodGet, requestURL, nil)
+		require.NoError(t, err, "wrong request creation")
+
+		var responseStruct = Response{}
+
+		resp, err := client.Do(req, &responseStruct)
+		require.NoError(t, err, "wrong request do")
+		require.Exactly(t, 200, resp.StatusCode)
+		require.Equal(t, Response{
+			Message: "my response",
+		}, responseStruct)
+
+		readBytes, err := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+		require.NoError(t, err, "unexpected error reading response body")
+		require.Exactly(t, response, string(readBytes), "buffer copy fails")
+	})
 }
 
 func TestIntegration(t *testing.T) {
