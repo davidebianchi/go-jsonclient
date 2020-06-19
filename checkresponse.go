@@ -12,8 +12,7 @@ type HTTPError struct {
 	Response   *http.Response
 	StatusCode int
 	Err        error
-
-	raw string
+	Raw        []byte
 }
 
 // ErrHTTP define an http error
@@ -21,7 +20,7 @@ var ErrHTTP = errors.New("http error")
 
 func (e *HTTPError) Error() string {
 	var delimiter string
-	if e.raw != "" {
+	if len(e.Raw) != 0 {
 		delimiter = " - "
 	}
 	return fmt.Sprintf("%v %v: %d%s%+v",
@@ -29,12 +28,14 @@ func (e *HTTPError) Error() string {
 		e.Response.Request.URL,
 		e.Response.StatusCode,
 		delimiter,
-		e.raw,
+		string(e.Raw),
 	)
 }
 func (e *HTTPError) Unwrap() error {
 	return e.Err
 }
+
+//func (e *HTTPError) Unmarshal
 
 func checkResponse(r *http.Response) error {
 	if c := r.StatusCode; c >= 200 && c <= 299 {
@@ -48,7 +49,7 @@ func checkResponse(r *http.Response) error {
 	}
 	data, err := ioutil.ReadAll(r.Body)
 	if err == nil && data != nil {
-		errorData.raw = string(data)
+		errorData.Raw = data
 	}
 	return errorData
 }
