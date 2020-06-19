@@ -105,20 +105,3 @@ func TestCheckResponse(t *testing.T) {
 		require.NoError(t, err, "error checking response")
 	})
 }
-
-/*func TestAccessToErrorRawValue(t *testing.T) {
-	errorMessage := `{"message":"error"}`
-	errResponseBody := ioutil.NopCloser(strings.NewReader(errorMessage))
-
-	errResp := &http.Response{
-		StatusCode: 300,
-		Body:       errResponseBody,
-		Request: &http.Request{
-			Method: "METHOD",
-			URL:    &url.URL{Path: "/request-url"},
-		},
-	}
-
-	err := checkResponse(errResp)
-
-}*/
