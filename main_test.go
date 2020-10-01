@@ -57,8 +57,8 @@ func TestNewClient(t *testing.T) {
 		}
 
 		opts := Options{
-			Headers: headers,
-			Client:  customHTTPClient,
+			Headers:    headers,
+			HTTPClient: customHTTPClient,
 		}
 		client, err := New(opts)
 		require.NoError(t, err, "create client error")
