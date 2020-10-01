@@ -26,6 +26,7 @@ type Client struct {
 type Options struct {
 	BaseURL string
 	Headers Headers
+	Client  *http.Client
 }
 
 // New function create a client using passed options
@@ -60,6 +61,9 @@ func New(opts Options) (*Client, error) {
 
 	if opts.Headers != nil {
 		client.DefaultHeaders = opts.Headers
+	}
+	if opts.Client != nil {
+		client.client = opts.Client
 	}
 
 	return client, nil
