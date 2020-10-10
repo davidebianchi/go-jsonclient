@@ -12,7 +12,6 @@ Go Json Client simplify the http request in json.
 
 It uses `net/http` core package as http client.
 
-
 ## Install
 
 This library require golang at version >= 1.13
@@ -31,7 +30,7 @@ authentication headers:
 ```go
 func handleRequest () {
   opts := jsonclient.Options{
-    BaseURL: apiURL,
+    BaseURL: "http://base-url:8080/api/url/",
     Headers: jsonclient.Headers{
       "some":  "header",
       "other": "value",
@@ -67,6 +66,16 @@ func handleRequest () {
   }
 }
 ```
+
+## API
+
+### Accepted client options
+
+In the `New` function, it is possible to add some options. None of the following options are required.
+
+* **BaseURL**: set the base url. BaseURL must be absolute and starts with `http` or `https` scheme. It must end with a trailing slash `/`. Example of valid BaseUrl: `"http://base-url:8080/api/url/"`
+* **Headers**: a map of headers to add to all the requests. For example, it could be useful when it is required an auth header.
+* **HTTPClient** (default to `http.DefaultClient`): an http client to use instead of the default http client. It could be useful for example for testing purpose.
 
 ## Versioning
 
