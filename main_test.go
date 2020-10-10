@@ -24,7 +24,7 @@ var baseURL = &url.URL{
 	Scheme: "https",
 }
 
-func TestGetClient(t *testing.T) {
+func TestNewClient(t *testing.T) {
 	t.Run("correctly returns client", func(t *testing.T) {
 		opts := Options{BaseURL: apiURL}
 		client, err := New(opts)
@@ -47,6 +47,26 @@ func TestGetClient(t *testing.T) {
 			DefaultHeaders: Headers{},
 
 			client: http.DefaultClient,
+		})
+	})
+
+	t.Run("correctly returns client with custom headers and http client", func(t *testing.T) {
+		headers := map[string]string{"h1": "v1", "h2": "v2"}
+		customHTTPClient := &http.Client{
+			Timeout: 1234,
+		}
+
+		opts := Options{
+			Headers:    headers,
+			HTTPClient: customHTTPClient,
+		}
+		client, err := New(opts)
+		require.NoError(t, err, "create client error")
+		require.Exactly(t, client, &Client{
+			BaseURL:        &url.URL{},
+			DefaultHeaders: headers,
+
+			client: customHTTPClient,
 		})
 	})
 
