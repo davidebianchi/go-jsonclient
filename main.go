@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -140,24 +141,35 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 		}
 		return nil, err
 	}
-	defer resp.Body.Close()
 
 	respErr := checkResponse(resp)
 	if respErr != nil {
 		return nil, respErr
 	}
 
-	if v != nil {
-		if w, ok := v.(io.Writer); ok {
-			io.Copy(w, resp.Body)
-		} else {
-			err := json.NewDecoder(resp.Body).Decode(v)
-			if err != nil && err != io.EOF {
-				return nil, err
-			}
-		}
+	if v == nil {
+		return resp, nil
 	}
 
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func() {
+		resp.Body.Close()
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	}()
+	
+	if w, ok := v.(io.Writer); ok {
+		io.Copy(w, bytes.NewBuffer(bodyBytes))
+		return resp, nil
+	}
+
+	jsonDecoder := json.NewDecoder(bytes.NewBuffer(bodyBytes))
+	if err := jsonDecoder.Decode(v); err != nil && err != io.EOF {
+		return nil, err
+	}
 	return resp, nil
 }
 
