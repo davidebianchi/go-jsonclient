@@ -105,7 +105,7 @@ func TestCheckResponse(t *testing.T) {
 		require.NoError(t, err, "error checking response")
 	})
 
-	t.Run("correctly GetRawAsJSON", func(t *testing.T) {
+	t.Run("correctly Unmarshal error", func(t *testing.T) {
 		body := ioutil.NopCloser(strings.NewReader(`{"message":"error"}`))
 
 		resp := &http.Response{
