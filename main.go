@@ -162,8 +162,7 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 		return resp, nil
 	}
 
-	jsonDecoder := json.NewDecoder(bytes.NewBuffer(bodyBytes))
-	if err := jsonDecoder.Decode(v); err != nil && err != io.EOF {
+	if err := json.Unmarshal(bodyBytes, v); err != nil && err != io.EOF {
 		return nil, err
 	}
 	return resp, nil

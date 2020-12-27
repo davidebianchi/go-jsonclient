@@ -418,7 +418,6 @@ func TestDo(t *testing.T) {
 		req, err := http.NewRequest(http.MethodGet, requestURL, nil)
 		require.NoError(t, err, "wrong request creation")
 
-
 		resp, err := client.Do(req, nil)
 		require.NoError(t, err, "wrong request do")
 		require.Exactly(t, 200, resp.StatusCode)
