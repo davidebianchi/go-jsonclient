@@ -36,8 +36,8 @@ func (e *HTTPError) Unwrap() error {
 	return e.Err
 }
 
-// GetRawAsJSON HTTPError content
-func (e *HTTPError) GetRawAsJSON(v interface{}) error {
+// Unmarshal HTTPError raw content
+func (e *HTTPError) Unmarshal(v interface{}) error {
 	return json.Unmarshal(e.Raw, v)
 }
 

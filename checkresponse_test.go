@@ -131,7 +131,7 @@ func TestCheckResponse(t *testing.T) {
 			Message string `json:"message"`
 		}
 		jsonError := myError{}
-		err = e.GetRawAsJSON(&jsonError)
+		err = e.Unmarshal(&jsonError)
 		require.NoError(t, err)
 		require.Equal(t, myError{
 			Message: "error",
