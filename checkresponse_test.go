@@ -31,8 +31,7 @@ func TestCheckResponse(t *testing.T) {
 			StatusCode: 300,
 			Response:   resp,
 			Err:        errors.New("http error"),
-
-			raw: `{"message":"error"}`,
+			Raw:        []byte(`{"message":"error"}`),
 		}, e)
 		require.True(t, errors.Is(err, ErrHTTP))
 	})
@@ -71,6 +70,7 @@ func TestCheckResponse(t *testing.T) {
 			StatusCode: 300,
 			Response:   resp,
 			Err:        errors.New("http error"),
+			Raw:        []byte{},
 		}, e)
 		require.True(t, errors.Is(err, ErrHTTP))
 	})
@@ -103,5 +103,38 @@ func TestCheckResponse(t *testing.T) {
 		}
 		err := checkResponse(resp)
 		require.NoError(t, err, "error checking response")
+	})
+
+	t.Run("correctly Unmarshal error", func(t *testing.T) {
+		body := ioutil.NopCloser(strings.NewReader(`{"message":"error"}`))
+
+		resp := &http.Response{
+			StatusCode: 300,
+			Body:       body,
+			Request: &http.Request{
+				Method: "METHOD",
+				URL:    &url.URL{Path: "/request-url"},
+			},
+		}
+		err := checkResponse(resp)
+		require.EqualError(t, err, `METHOD /request-url: 300 - {"message":"error"}`, "error checking response")
+		var e *HTTPError
+		require.True(t, errors.As(err, &e))
+		require.Equal(t, &HTTPError{
+			StatusCode: 300,
+			Response:   resp,
+			Err:        errors.New("http error"),
+			Raw:        []byte(`{"message":"error"}`),
+		}, e)
+		require.True(t, errors.Is(err, ErrHTTP))
+		type myError struct {
+			Message string `json:"message"`
+		}
+		jsonError := myError{}
+		err = e.Unmarshal(&jsonError)
+		require.NoError(t, err)
+		require.Equal(t, myError{
+			Message: "error",
+		}, jsonError)
 	})
 }
