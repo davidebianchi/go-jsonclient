@@ -1,6 +1,7 @@
 package jsonclient
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -35,7 +36,10 @@ func (e *HTTPError) Unwrap() error {
 	return e.Err
 }
 
-//func (e *HTTPError) Unmarshal
+// GetRawAsJSON HTTPError content
+func (e *HTTPError) GetRawAsJSON(v interface{}) error {
+	return json.Unmarshal(e.Raw, v)
+}
 
 func checkResponse(r *http.Response) error {
 	if c := r.StatusCode; c >= 200 && c <= 299 {
