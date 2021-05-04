@@ -67,6 +67,8 @@ func handleRequest () {
 }
 ```
 
+The library also check the status code of the request. If status code si not 2xx, it will return an `HTTPError`.
+
 ## API
 
 ### Accepted client options
