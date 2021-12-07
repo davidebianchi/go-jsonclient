@@ -78,6 +78,7 @@ In the `New` function, it is possible to add some options. None of the following
 * **BaseURL**: set the base url. BaseURL must be absolute and starts with `http` or `https` scheme. It must end with a trailing slash `/`. Example of valid BaseUrl: `"http://base-url:8080/api/url/"`
 * **Headers**: a map of headers to add to all the requests. For example, it could be useful when it is required an auth header.
 * **HTTPClient** (default to `http.DefaultClient`): an http client to use instead of the default http client. It could be useful for example for testing purpose.
+* **Host**: set the host in all client requests.
 
 ## Versioning
 
