@@ -5,6 +5,7 @@
 [![Build Status][github-actions-svg]][github-actions]
 [![Go Report Card][go-report-card]][go-report-card-link]
 [![GoDoc][godoc-svg]][godoc-link]
+[![Coverage Status][coveralls-svg]][coveralls-link]
 
 </div>
 
@@ -91,3 +92,5 @@ see the [tags on this repository](https://github.com/davidebianchi/go-jsonclient
 [go-report-card]: https://goreportcard.com/badge/github.com/davidebianchi/go-jsonclient
 [go-report-card-link]: https://goreportcard.com/report/github.com/davidebianchi/go-jsonclient
 [semver]: https://semver.org/
+[coveralls-svg]: https://coveralls.io/repos/github/davidebianchi/go-jsonclient/badge.svg?branch=master
+[coveralls-link]: https://coveralls.io/github/davidebianchi/go-jsonclient?branch=master
