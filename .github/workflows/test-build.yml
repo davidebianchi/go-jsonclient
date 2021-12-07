@@ -9,8 +9,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        go_version: [1.13, 1.14, 1.15]
-        os: [macos-latest, ubuntu-latest]
+        go_version: [1.13, 1.14, 1.15, 1.16, 1.17]
+        os: [ubuntu-latest]
+        include:
+          - go_version: 1.17
+            os: macos-latest
     steps:
       - uses: actions/checkout@v1
       - name: Use golang ${{ matrix.go_version }}
