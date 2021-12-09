@@ -7,10 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### 1.3.0 - 09-12-2020
+
 #### Added
 
 - Unmarshal method as `HTTPError` method
 - expose Raw as slice of bytes in `HTTPError`
+- set an Host header to all client requests
 
 ### 1.2.0 - 11-10-2020
 
