@@ -18,6 +18,7 @@ type Headers map[string]string
 type Client struct {
 	BaseURL        *url.URL
 	DefaultHeaders Headers
+	Host           string
 
 	client *http.Client
 }
@@ -27,6 +28,7 @@ type Options struct {
 	BaseURL    string
 	Headers    Headers
 	HTTPClient *http.Client
+	Host       string
 }
 
 // New function create a client using passed options
@@ -64,6 +66,9 @@ func New(opts Options) (*Client, error) {
 	}
 	if opts.HTTPClient != nil {
 		client.client = opts.HTTPClient
+	}
+	if opts.Host != "" {
+		client.Host = opts.Host
 	}
 
 	return client, nil
@@ -117,6 +122,9 @@ func (c *Client) NewRequestWithContext(ctx context.Context, method string, urlSt
 
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
+	}
+	if c.Host != "" {
+		req.Host = c.Host
 	}
 
 	return req, nil

@@ -429,6 +429,40 @@ func TestDo(t *testing.T) {
 		require.Error(t, err, "response error")
 		require.Nil(t, resp, "response is not nil")
 	})
+
+	t.Run("set host header in request", func(t *testing.T) {
+		var hostHeader string
+		setupServer := func(responseBody string, statusCode int) *httptest.Server {
+			return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				hostHeader = req.Host
+				w.WriteHeader(statusCode)
+				if responseBody != "" {
+					w.Write([]byte(responseBody))
+					return
+				}
+				w.Write(nil)
+			}))
+		}
+		s := setupServer(response, 200)
+		defer s.Close()
+
+		baseURL := fmt.Sprintf("%s/", s.URL)
+		opts := Options{
+			BaseURL: baseURL,
+			Host:    "my-host:3000",
+		}
+		client, err := New(opts)
+		require.NoError(t, err, "wrong client creation")
+
+		req, err := client.NewRequest(http.MethodGet, "", nil)
+		require.NoError(t, err, "wrong request creation")
+
+		v := Response{}
+		_, err = client.Do(req, &v)
+		require.NoError(t, err, "wrong request do")
+		require.Equal(t, "my-host:3000", hostHeader)
+	})
+
 }
 
 func TestIntegration(t *testing.T) {
