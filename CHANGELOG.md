@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### 1.5.0 - 01-06-2023
+
 ### Added
 
--- add trailing slash to base url if not given
+- add trailing slash to base url if not given
+
+### 1.4.0 - 05-03-2023
+
+- upgrade dependencies
 
 ### 1.3.0 - 09-12-2020
 
