@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+
+-- add trailing slash to base url if not given
+
 ### 1.3.0 - 09-12-2020
 
 #### Added

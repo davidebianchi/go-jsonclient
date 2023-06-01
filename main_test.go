@@ -43,7 +43,7 @@ func TestNewClient(t *testing.T) {
 		client, err := New(opts)
 		require.NoError(t, err, "create client error")
 		require.Exactly(t, client, &Client{
-			BaseURL:        &url.URL{},
+			BaseURL:        &url.URL{Path: "/"},
 			DefaultHeaders: Headers{},
 
 			client: http.DefaultClient,
@@ -63,7 +63,7 @@ func TestNewClient(t *testing.T) {
 		client, err := New(opts)
 		require.NoError(t, err, "create client error")
 		require.Exactly(t, client, &Client{
-			BaseURL:        &url.URL{},
+			BaseURL:        &url.URL{Path: "/"},
 			DefaultHeaders: headers,
 
 			client: customHTTPClient,
@@ -100,14 +100,14 @@ func TestNewClient(t *testing.T) {
 		require.Nil(t, client, "client is not nil")
 	})
 
-	t.Run("throws if base url doesn't end with /", func(t *testing.T) {
+	t.Run("add trailing slash if base url doesn't end with /", func(t *testing.T) {
 		opts := Options{
 			BaseURL: strings.TrimSuffix(apiURL, "/"),
 		}
 		client, err := New(opts)
 
-		require.EqualError(t, err, "BaseURL must end with a trailing slash")
-		require.Nil(t, client, "client is not nil")
+		require.NoError(t, err)
+		require.Equal(t, apiURL, client.BaseURL.String())
 	})
 }
 
