@@ -8,7 +8,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 // Headers map. A key/value map of headers
@@ -34,7 +33,12 @@ type Options struct {
 // New function create a client using passed options
 // BaseURL must be an HTTP or HTTPs absolute url and have a trailing slash
 func New(opts Options) (*Client, error) {
-	baseURL, err := url.Parse(opts.BaseURL)
+	baseUrlToParse, err := url.JoinPath(opts.BaseURL, "/")
+	if err != nil {
+		return nil, err
+	}
+
+	baseURL, err := url.Parse(baseUrlToParse)
 	if err != nil {
 		return nil, err
 	}
@@ -46,11 +50,6 @@ func New(opts Options) (*Client, error) {
 		scheme := baseURL.Scheme
 		if scheme != "http" && scheme != "https" {
 			return nil, fmt.Errorf("unsupported scheme: %s", scheme)
-		}
-
-		path := baseURL.Path
-		if !strings.HasSuffix(path, "/") {
-			return nil, fmt.Errorf("BaseURL must end with a trailing slash")
 		}
 	}
 
