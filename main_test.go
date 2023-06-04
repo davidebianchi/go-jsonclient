@@ -466,7 +466,7 @@ func TestDo(t *testing.T) {
 }
 
 func TestIntegration(t *testing.T) {
-	setupServer := func(responseBody, expectedRequestBody string, statusCode int) *httptest.Server {
+	setupServer := func(responseBody, expectedRequestBody string, expectedHeaders map[string]string, statusCode int) *httptest.Server {
 		t.Helper()
 		return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			defer req.Body.Close()
@@ -474,6 +474,12 @@ func TestIntegration(t *testing.T) {
 			if expectedRequestBody != "" {
 				bodyBytes, _ := ioutil.ReadAll(req.Body)
 				require.Equal(t, expectedRequestBody, strings.TrimSuffix(string(bodyBytes), "\n"))
+			}
+
+			if expectedHeaders != nil {
+				for k, v := range expectedHeaders {
+					require.Equal(t, v, req.Header.Get(k))
+				}
 			}
 
 			w.WriteHeader(statusCode)
@@ -490,7 +496,7 @@ func TestIntegration(t *testing.T) {
 		type Response struct {
 			Message string `json:"message"`
 		}
-		s := setupServer(fmt.Sprintf(`{"message": "%s"}`, expectedMessage), "", 200)
+		s := setupServer(fmt.Sprintf(`{"message": "%s"}`, expectedMessage), "", nil, 200)
 		opts := Options{
 			BaseURL: fmt.Sprintf("%s/api/", s.URL),
 		}
@@ -523,7 +529,7 @@ func TestIntegration(t *testing.T) {
 		expectedName := "my name"
 		expectedDescription := "my description"
 		expectedRequestBody := fmt.Sprintf(`{"name":"%s","description":"%s"}`, expectedName, expectedDescription)
-		s := setupServer(fmt.Sprintf(`{"id": "%s"}`, myID), expectedRequestBody, 200)
+		s := setupServer(fmt.Sprintf(`{"id": "%s"}`, myID), expectedRequestBody, nil, 200)
 		opts := Options{
 			BaseURL: fmt.Sprintf("%s/api/", s.URL),
 		}
@@ -545,4 +551,34 @@ func TestIntegration(t *testing.T) {
 		}, response)
 		require.Equal(t, 200, r.StatusCode, "wrong status code")
 	})
+
+	t.Run("with default headers", func(t *testing.T) {
+		expectedMessage := "my message"
+		type Response struct {
+			Message string `json:"message"`
+		}
+		h := map[string]string{
+			"foo": "bar",
+		}
+		s := setupServer(fmt.Sprintf(`{"message": "%s"}`, expectedMessage), "", h, 200)
+		opts := Options{
+			BaseURL: fmt.Sprintf("%s/api/", s.URL),
+			Headers: h,
+		}
+		client, err := New(opts)
+		require.NoError(t, err, "throws create client")
+
+		req, err := client.NewRequest(http.MethodGet, "/my-resource", nil)
+		require.NoError(t, err, "throws creating request")
+
+		response := Response{}
+		r, err := client.Do(req, &response)
+		require.NoError(t, err, "throws exec request")
+
+		require.Equal(t, Response{
+			Message: expectedMessage,
+		}, response)
+		require.Equal(t, 200, r.StatusCode, "wrong status code")
+	})
+
 }
